@@ -8,16 +8,18 @@ A powerful and flexible SimHub plugin that publishes granular racing telemetry d
 
 - **80+ Granular Telemetry Properties** - Select exactly what data you need
 - **Organized Tab Interface** - Clean UI with Connection, Presets, Telemetry, and Settings tabs
+- **Configurable Update Rate** - Set the MQTT publish interval in milliseconds (default: 100 ms ≈ 10 Hz)
+- **Publish on Change Only** - Optionally skip publishing when no selected values have changed
 - **Root-Level Property Control** - Choose to include/exclude timestamp, userId, and gameName
 - **Dynamic Topic Placeholders** - Use {gameName}, {sessionType}, {trackName}, {carName} for flexible routing
-- **Real-time MQTT Publishing** - Low-latency data streaming to any MQTT broker
+- **Real-time MQTT Publishing** - Non-blocking, fire-and-forget data streaming to any MQTT broker
 - **Quick Preset Configurations** - Basic, Racing, Strategy, and Analysis presets
 - **Export/Import Settings** - Share configurations between installations
 - **Connection Testing** - Built-in MQTT broker connectivity verification
 - **Password Protection** - Secure credential management with show/hide toggle
 - **Debug Mode** - Complete raw telemetry data for discovery and troubleshooting
-- **Performance Warnings** - Clear guidance on payload size and CPU usage
-- **Multi-Game Support** - Works with any simulator supported by SimHub (currently optimized for iRacing)
+- **Correct Lap Time Handling** - Proper TimeSpan-to-millisecond conversion for BestLapTime, LastLapTime, sector times, etc.
+- **Multi-Game Support** - Works with any simulator supported by SimHub (Le Mans Ultimate, iRacing, ACC, and more)
 
 ## Table of Contents
 
@@ -41,7 +43,7 @@ A powerful and flexible SimHub plugin that publishes granular racing telemetry d
 
 ### Installation Steps
 
-1. **Download the latest release** from the [Releases page](https://github.com/SimenAsphaug/SimHub-MQTT-Publisher/releases)
+1. **Download the latest release** from the [Releases page](https://github.com/tschuchort/SimHub-MQTT-Publisher/releases)
 
 2. **Extract the release archive** - You'll find three DLL files:
    - `SimHub.MQTTPublisher.dll`
@@ -144,13 +146,17 @@ Available in the **Advanced Debugging** section of the Telemetry Configuration t
 
 #### Performance Considerations
 
-The plugin currently sends data on **every SimHub update (60-100+ times per second)**. Performance tips:
+The plugin provides two mechanisms to control MQTT traffic:
+
+- **Update Interval (ms)** — Configurable in Connection Settings. Sets the minimum time between publishes. Default: 100 ms (≈ 10 Hz). Minimum: 10 ms.
+- **Publish on Change Only** — When enabled, messages are only sent if at least one selected telemetry value has changed since the last publish. Ideal for slow-changing data like lap times or position.
+
+Additional performance tips:
 
 - Enable only the properties you actually need
 - Disable entire categories you don't use
 - Avoid Debug Mode unless specifically needed for troubleshooting
 - More properties = Larger payloads = Higher CPU usage
-- Configurable update rate polling will be added in a future release
 
 ## Usage
 
@@ -357,7 +363,13 @@ Contributions are welcome! Please feel free to:
 
 ## Version History
 
-**v1.1.0** (Current)
+**v1.2.0** (Current)
+- **Configurable Update Rate**: Set MQTT publish interval in milliseconds via Connection Settings (default 100 ms ≈ 10 Hz)
+- **Publish on Change Only**: New option to skip publishing when no telemetry values have changed — greatly reduces MQTT traffic
+- **Non-blocking Publishing**: Replaced synchronous `.Wait()` with fire-and-forget to avoid blocking SimHub's critical DataUpdate path
+- **Fixed Lap Time Data**: BestLapTime, LastLapTime, PersonalBestLapTime, SessionBestLapTime, and all sector times now correctly convert from TimeSpan to milliseconds (previously always returned null)
+
+**v1.1.0**
 - **Organized Tab Interface**: Separated UI into Connection, Presets, Telemetry, and Settings tabs
 - **Root-Level Property Control**: Choose which root properties to include (time, userId, gameName)
 - **Dynamic Topic Placeholders**: Support for {gameName}, {sessionType}, {trackName}, {carName} placeholders in MQTT topics
