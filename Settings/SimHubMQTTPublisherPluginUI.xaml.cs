@@ -307,7 +307,7 @@ namespace SimHub.MQTTPublisher.Settings
             SimHubMQTTPublisherPlugin.Settings.UpdateIntervalMs = Model.UpdateIntervalMs;
             SimHubMQTTPublisherPlugin.Settings.PublishOnChangeOnly = Model.PublishOnChangeOnly;
 
-            SimHubMQTTPublisherPlugin.CreateMQTTClient();
+            Task.Run(() => SimHubMQTTPublisherPlugin.CreateMQTTClient());
         }
 
         private void EnableAll_Click(object sender, System.Windows.RoutedEventArgs e)

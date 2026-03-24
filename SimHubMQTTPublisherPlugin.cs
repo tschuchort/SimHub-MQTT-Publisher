@@ -13,7 +13,7 @@ using System.Windows.Media;
 namespace SimHub.MQTTPublisher
 {
     [PluginDescription("MQTT Publisher")]
-    [PluginAuthor("Asphaug")]
+    [PluginAuthor("TSchuchort")]
     [PluginName("MQTT Publisher Enhanced")]
     public class SimHubMQTTPublisherPlugin : IPlugin, IDataPlugin, IWPFSettingsV2
     {
@@ -55,6 +55,11 @@ namespace SimHub.MQTTPublisher
             if (!data.GameRunning)
                 return;
 
+            // If MQTT is not connected, skip all payload work to keep update loop lightweight.
+            var client = mqttClient;
+            if (client == null || !client.IsConnected)
+                return;
+
             // Throttle: only publish when the configured interval has elapsed
             if (_publishStopwatch.IsRunning && _publishStopwatch.ElapsedMilliseconds < Settings.UpdateIntervalMs)
                 return;
@@ -83,7 +88,7 @@ namespace SimHub.MQTTPublisher
                .Build();
 
             // Fire-and-forget: don't block the critical DataUpdate path
-            Task.Run(() => mqttClient.PublishAsync(applicationMessage, CancellationToken.None));
+            _ = client.PublishAsync(applicationMessage, CancellationToken.None);
         }
 
         /// <summary>
@@ -96,7 +101,7 @@ namespace SimHub.MQTTPublisher
             // Save settings
             this.SaveCommonSettings("GeneralSettings", Settings);
             this.SaveCommonSettings("UserSettings", UserSettings);
-            mqttClient.Dispose();
+            mqttClient?.Dispose();
         }
 
         /// <summary>
@@ -125,7 +130,8 @@ namespace SimHub.MQTTPublisher
 
             this.mqttFactory = new MqttFactory();
 
-            CreateMQTTClient();
+            // Run on background thread so the UI thread is never blocked
+            Task.Run(() => CreateMQTTClient());
         }
 
         internal void CreateMQTTClient()
@@ -137,15 +143,26 @@ namespace SimHub.MQTTPublisher
                .WithCredentials(Settings.Login, Settings.Password)
                .Build();
 
-            newmqttClient.ConnectAsync(mqttClientOptions, CancellationToken.None);
 
+
+
+            // Assign client before connecting so DataUpdate can check IsConnected
             var oldMqttClient = this.mqttClient;
-
             mqttClient = newmqttClient;
-
             if (oldMqttClient != null)
-            {
                 oldMqttClient.Dispose();
+
+            // Connect with a 10-second timeout; this method always runs on a background thread
+            try
+            {
+                using (var cts = new CancellationTokenSource(System.TimeSpan.FromSeconds(10)))
+                {
+                    newmqttClient.ConnectAsync(mqttClientOptions, cts.Token).GetAwaiter().GetResult();
+                }
+            }
+            catch (System.Exception ex)
+            {
+                SimHub.Logging.Current.Warn($"MQTT connect failed: {ex.Message}");
             }
         }
 
