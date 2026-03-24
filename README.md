@@ -66,7 +66,8 @@ A powerful and flexible SimHub plugin that publishes granular racing telemetry d
 1. **Open SimHub** and navigate to the MQTT Publisher Enhanced plugin settings
 
 2. **Configure MQTT Connection** (Connection Settings Tab):
-   ```
+
+   ```text
    MQTT Server: mqtt://your-broker-address:1883
    Login: your_username (if authentication enabled)
    Password: your_password (if authentication enabled)
@@ -117,11 +118,13 @@ A powerful and flexible SimHub plugin that publishes granular racing telemetry d
 Go to the **Settings Management Tab**:
 
 **Export your configuration:**
+
 1. Click "Export Settings" button
 2. Choose a location and filename (e.g., `my-racing-config.json`)
 3. Settings are saved as JSON (password excluded for security)
 
 **Import a configuration:**
+
 1. Click "Import Settings" button
 2. Select a previously exported JSON file
 3. Review the imported settings
@@ -132,10 +135,12 @@ Go to the **Settings Management Tab**:
 Available in the **Advanced Debugging** section of the Telemetry Configuration tab:
 
 **Debug Flag Details:**
+
 - Shows individual flag breakdown (Green, Yellow, Red, Blue, etc.)
 - Useful for understanding flag system behavior
 
 **Debug Mode:**
+
 - Sends ALL raw telemetry data from the simulator
 - Includes complete GameData object with hundreds of properties
 - **Warning:** Significantly increases payload size and CPU usage
@@ -163,6 +168,7 @@ Additional performance tips:
 ### Starting Data Stream
 
 Once configured, the plugin automatically publishes telemetry data when:
+
 1. SimHub is running
 2. A supported racing simulator is running
 3. You're in an active session (practice, qualifying, race)
@@ -174,16 +180,19 @@ Data is published to your configured MQTT topic in JSON format.
 Use any MQTT client to subscribe and view the data:
 
 **Using mosquitto_sub (command line):**
+
 ```bash
 mosquitto_sub -h your-broker-address -t simhub/telemetry -u username -P password
 ```
 
 **Using MQTT Explorer (GUI):**
+
 1. Connect to your broker
 2. Subscribe to your topic (e.g., `simhub/telemetry`)
 3. View real-time JSON payloads
 
 **Using Node-RED:**
+
 1. Add an MQTT Input node
 2. Configure broker connection
 3. Set topic to match your configuration
@@ -214,6 +223,7 @@ The plugin publishes data as JSON with the following top-level structure:
 ```
 
 **Root-Level Properties:**
+
 - `time` - Unix timestamp in milliseconds (enabled by default)
 - `userId` - Unique identifier for the user (disabled by default)
 - `gameName` - Name of the racing simulator (enabled by default)
@@ -247,6 +257,7 @@ For detailed documentation of all data fields, see the [Documentation](#document
 ### Real-time Dashboard
 
 Build custom web dashboards using:
+
 - **MQTT.js** (JavaScript MQTT client)
 - **WebSockets** (with MQTT broker WebSocket support)
 - **Chart.js / D3.js** for data visualization
@@ -255,6 +266,7 @@ Build custom web dashboards using:
 ### Data Analysis
 
 Collect telemetry for post-race analysis:
+
 - Subscribe to MQTT topic with Python, Node.js, or any language
 - Store data in database (InfluxDB, MongoDB, PostgreSQL)
 - Analyze lap times, tire degradation, fuel consumption
@@ -263,6 +275,7 @@ Collect telemetry for post-race analysis:
 ### Streaming Overlays
 
 Enhance your live streams:
+
 - OBS Browser Source with MQTT WebSocket connection
 - Display real-time telemetry on stream
 - Custom graphics and animations based on race events
@@ -271,6 +284,7 @@ Enhance your live streams:
 ### IoT Integration
 
 Connect physical devices:
+
 - LED strips for flag status (green = racing, yellow = caution)
 - Vibration motors for tire wear warnings
 - Physical gauges for RPM, speed, fuel
@@ -279,6 +293,7 @@ Connect physical devices:
 ### Discord/Telegram Bots
 
 Create race notifications:
+
 - Subscribe to MQTT with bot
 - Send alerts for race start, finish, incidents
 - Post lap time updates to channels
@@ -305,12 +320,14 @@ Comprehensive documentation is available in the `/docs` folder:
 ### Connection Issues
 
 **"Connection timeout" error:**
+
 - Verify broker address and port (default MQTT port is 1883)
 - Check firewall rules allow outbound connections on port 1883
 - Ensure MQTT broker is running and accessible
 - Try connecting with mosquitto_sub to verify broker availability
 
 **"Connection failed" error:**
+
 - Check username and password if authentication is enabled
 - Verify broker supports MQTT 3.1.1 protocol
 - Check broker logs for connection rejection reasons
@@ -319,6 +336,7 @@ Comprehensive documentation is available in the `/docs` folder:
 ### No Data Received
 
 **Subscribed to topic but receiving no messages:**
+
 - Confirm a racing simulator is running and in an active session
 - Verify at least one telemetry option is enabled
 - Check topic name matches exactly (MQTT is case-sensitive)
@@ -326,6 +344,7 @@ Comprehensive documentation is available in the `/docs` folder:
 - Look for errors in SimHub logs
 
 **Data is missing expected fields:**
+
 - Not all simulators provide all telemetry properties
 - Enable Debug Mode temporarily to see all available properties for your sim
 - Some properties are only available during specific conditions (e.g., DRS in F1 games)
@@ -333,12 +352,14 @@ Comprehensive documentation is available in the `/docs` folder:
 ### Performance Issues
 
 **SimHub or game stuttering:**
+
 - Reduce the number of enabled telemetry properties
 - Check MQTT broker can handle the message rate
 - Consider using MQTT QoS level 0 for better performance
 - Verify network connection is stable
 
 **High bandwidth usage:**
+
 - Disable unnecessary telemetry categories
 - Avoid Debug Mode unless needed
 - Consider implementing message throttling in your client application
@@ -346,6 +367,7 @@ Comprehensive documentation is available in the `/docs` folder:
 ### Data Format Issues
 
 **Parsing JSON fails:**
+
 - Ensure your client expects null values may be omitted
 - Check for partial messages (unlikely but possible with network issues)
 - Validate JSON structure with online JSON validator
@@ -363,13 +385,15 @@ Contributions are welcome! Please feel free to:
 
 ## Version History
 
-**v1.2.0** (Current)
+### v1.2.0 (Current)
+
 - **Configurable Update Rate**: Set MQTT publish interval in milliseconds via Connection Settings (default 100 ms ≈ 10 Hz)
 - **Publish on Change Only**: New option to skip publishing when no telemetry values have changed — greatly reduces MQTT traffic
 - **Non-blocking Publishing**: Replaced synchronous `.Wait()` with fire-and-forget to avoid blocking SimHub's critical DataUpdate path
 - **Fixed Lap Time Data**: BestLapTime, LastLapTime, PersonalBestLapTime, SessionBestLapTime, and all sector times now correctly convert from TimeSpan to milliseconds (previously always returned null)
 
-**v1.1.0**
+### v1.1.0
+
 - **Organized Tab Interface**: Separated UI into Connection, Presets, Telemetry, and Settings tabs
 - **Root-Level Property Control**: Choose which root properties to include (time, userId, gameName)
 - **Dynamic Topic Placeholders**: Support for {gameName}, {sessionType}, {trackName}, {carName} placeholders in MQTT topics
@@ -380,7 +404,8 @@ Contributions are welcome! Please feel free to:
 - **Improved Presets**: "Enable All" now excludes debug options for safety
 - **Better UX**: Global Apply Settings button, clearer organization, helpful tooltips, collapsed expanders by default
 
-**v1.0.0**
+### v1.0.0
+
 - Complete rewrite with 80+ granular telemetry properties
 - Quick preset configurations (Basic, Racing, Strategy, Analysis)
 - Export/Import settings functionality
@@ -406,6 +431,7 @@ Original project by SHWotever - Enhanced by Simen Asphaug
 ## Support
 
 For issues, questions, or suggestions:
+
 - Open an issue on GitHub
 - Check existing documentation in the `/docs` folder
 - Review closed issues for similar problems
