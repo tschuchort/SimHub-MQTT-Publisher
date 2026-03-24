@@ -147,6 +147,7 @@ namespace SimHub.MQTTPublisher.Settings
 
                 // === PERFORMANCE ===
                 UpdateIntervalMs = simHubMQTTPublisherPlugin.Settings.UpdateIntervalMs,
+                PublishOnChangeOnly = simHubMQTTPublisherPlugin.Settings.PublishOnChangeOnly,
             };
 
             this.DataContext = Model;
@@ -304,6 +305,7 @@ namespace SimHub.MQTTPublisher.Settings
 
             // === PERFORMANCE ===
             SimHubMQTTPublisherPlugin.Settings.UpdateIntervalMs = Model.UpdateIntervalMs;
+            SimHubMQTTPublisherPlugin.Settings.PublishOnChangeOnly = Model.PublishOnChangeOnly;
 
             SimHubMQTTPublisherPlugin.CreateMQTTClient();
         }

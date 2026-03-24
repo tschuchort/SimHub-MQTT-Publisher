@@ -24,6 +24,7 @@ namespace SimHub.MQTTPublisher
         private MqttFactory mqttFactory;
         private IMqttClient mqttClient;
         private readonly Stopwatch _publishStopwatch = new Stopwatch();
+        private string _lastPublishedPayload;
 
         /// <summary>
         /// Instance of the current plugin manager
@@ -66,6 +67,12 @@ namespace SimHub.MQTTPublisher
                 {
                     NullValueHandling = NullValueHandling.Ignore
                 });
+
+            // Skip publish if payload hasn't changed and option is enabled
+            if (Settings.PublishOnChangeOnly && payload == _lastPublishedPayload)
+                return;
+
+            _lastPublishedPayload = payload;
 
             // Resolve topic placeholders like {gameName}
             var resolvedTopic = ResolveTopic(Settings.Topic, data);

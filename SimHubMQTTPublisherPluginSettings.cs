@@ -139,6 +139,11 @@ namespace SimHub.MQTTPublisher
         /// Default 100 ms = ~10 updates/second.
         /// </summary>
         public int UpdateIntervalMs { get; set; } = 100;
+
+        /// <summary>
+        /// When true, only publish when payload data has actually changed.
+        /// </summary>
+        public bool PublishOnChangeOnly { get; set; } = false;
     }
 
     public class SimHubMQTTPublisherPluginUserSettings

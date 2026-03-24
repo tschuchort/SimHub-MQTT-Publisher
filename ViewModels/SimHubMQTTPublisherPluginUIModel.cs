@@ -139,6 +139,7 @@ namespace SimHub.MQTTPublisher.ViewModels
 
         // === PERFORMANCE ===
         private int _updateIntervalMs = 100;
+        private bool _publishOnChangeOnly = false;
 
         public string Server
         {
@@ -1111,6 +1112,16 @@ namespace SimHub.MQTTPublisher.ViewModels
             set
             {
                 _updateIntervalMs = value < 10 ? 10 : value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool PublishOnChangeOnly
+        {
+            get => _publishOnChangeOnly;
+            set
+            {
+                _publishOnChangeOnly = value;
                 OnPropertyChanged();
             }
         }

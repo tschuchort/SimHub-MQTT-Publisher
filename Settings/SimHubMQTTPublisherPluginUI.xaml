@@ -50,6 +50,7 @@
                             <RowDefinition Height="auto" />
                             <RowDefinition Height="auto" />
                             <RowDefinition Height="auto" />
+                            <RowDefinition Height="auto" />
                         </Grid.RowDefinitions>
 
                         <Label Grid.Row="0">MQTT Server</Label>
@@ -92,8 +93,16 @@
                             </TextBlock>
                         </StackPanel>
 
-                        <Label Grid.Row="6">Connection</Label>
-                        <StackPanel Grid.Row="6" Grid.Column="1" Orientation="Horizontal" Margin="4">
+                        <Label Grid.Row="6">Publish Mode</Label>
+                        <StackPanel Grid.Row="6" Grid.Column="1" Margin="4">
+                            <CheckBox Content="Only publish when data changes" IsChecked="{Binding Path=PublishOnChangeOnly}" />
+                            <TextBlock FontSize="10" Foreground="Gray" Margin="0,2,0,0" TextWrapping="Wrap">
+                                When enabled, MQTT messages are only sent if at least one selected value has changed since the last publish. Greatly reduces traffic for slow-changing data.
+                            </TextBlock>
+                        </StackPanel>
+
+                        <Label Grid.Row="7">Connection</Label>
+                        <StackPanel Grid.Row="7" Grid.Column="1" Orientation="Horizontal" Margin="4">
                             <styles:SHButtonPrimary Margin="0,0,8,0" Click="TestConnection_Click">Test Connection</styles:SHButtonPrimary>
                             <TextBlock x:Name="ConnectionStatusText" VerticalAlignment="Center" Text="Not tested" Foreground="Gray"/>
                         </StackPanel>
