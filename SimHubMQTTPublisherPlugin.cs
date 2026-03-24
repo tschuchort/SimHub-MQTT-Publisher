@@ -66,18 +66,22 @@ namespace SimHub.MQTTPublisher
 
             _publishStopwatch.Restart();
 
+            var payloadRoot = new Payload.PayloadRoot(data, UserSettings, Settings);
+
             var payload = JsonConvert.SerializeObject(
-                new Payload.PayloadRoot(data, UserSettings, Settings),
+                payloadRoot,
                 new JsonSerializerSettings
                 {
                     NullValueHandling = NullValueHandling.Ignore
                 });
 
+            var payloadForChangeDetection = BuildChangeDetectionPayload(payloadRoot, payload);
+
             // Skip publish if payload hasn't changed and option is enabled
-            if (Settings.PublishOnChangeOnly && payload == _lastPublishedPayload)
+            if (Settings.PublishOnChangeOnly && payloadForChangeDetection == _lastPublishedPayload)
                 return;
 
-            _lastPublishedPayload = payload;
+            _lastPublishedPayload = payloadForChangeDetection;
 
             // Resolve topic placeholders like {gameName}
             var resolvedTopic = ResolveTopic(Settings.Topic, data);
@@ -89,6 +93,29 @@ namespace SimHub.MQTTPublisher
 
             // Fire-and-forget: don't block the critical DataUpdate path
             _ = client.PublishAsync(applicationMessage, CancellationToken.None);
+        }
+
+        private string BuildChangeDetectionPayload(Payload.PayloadRoot payloadRoot, string payload)
+        {
+            if (!Settings.PublishOnChangeOnly)
+                return payload;
+
+            if (!Settings.Include_Time)
+                return payload;
+
+            // Ignore timestamp-only differences when PublishOnChangeOnly is enabled.
+            var originalTime = payloadRoot.time;
+            payloadRoot.time = null;
+
+            var payloadWithoutTime = JsonConvert.SerializeObject(
+                payloadRoot,
+                new JsonSerializerSettings
+                {
+                    NullValueHandling = NullValueHandling.Ignore
+                });
+
+            payloadRoot.time = originalTime;
+            return payloadWithoutTime;
         }
 
         /// <summary>
