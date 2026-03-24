@@ -1,5 +1,6 @@
 using GameReaderCommon;
 using Newtonsoft.Json;
+using System;
 
 namespace SimHub.MQTTPublisher.Payload
 {
@@ -148,6 +149,11 @@ namespace SimHub.MQTTPublisher.Payload
                 var property = data.NewData.GetType().GetProperty(propertyName);
                 var value = property?.GetValue(data.NewData);
                 if (value == null) return null;
+
+                // SimHub lap/sector times are TimeSpan objects – convert to milliseconds
+                if (value is TimeSpan ts)
+                    return ts.TotalMilliseconds;
+
                 if (double.TryParse(value.ToString(), out double result))
                     return result;
                 return null;

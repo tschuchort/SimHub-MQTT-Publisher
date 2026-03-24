@@ -5,6 +5,7 @@ using MQTTnet.Client.Options;
 using Newtonsoft.Json;
 using SimHub.MQTTPublisher.Settings;
 using SimHub.Plugins;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media;
@@ -22,6 +23,7 @@ namespace SimHub.MQTTPublisher
 
         private MqttFactory mqttFactory;
         private IMqttClient mqttClient;
+        private readonly Stopwatch _publishStopwatch = new Stopwatch();
 
         /// <summary>
         /// Instance of the current plugin manager
@@ -49,25 +51,32 @@ namespace SimHub.MQTTPublisher
         /// <param name="data">Current game data, including current and previous data frame.</param>
         public void DataUpdate(PluginManager pluginManager, ref GameData data)
         {
-            if (data.GameRunning)
-            {
-                var payload = JsonConvert.SerializeObject(
-                    new Payload.PayloadRoot(data, UserSettings, Settings),
-                    new JsonSerializerSettings
-                    {
-                        NullValueHandling = NullValueHandling.Ignore
-                    });
+            if (!data.GameRunning)
+                return;
 
-                // Resolve topic placeholders like {gameName}
-                var resolvedTopic = ResolveTopic(Settings.Topic, data);
+            // Throttle: only publish when the configured interval has elapsed
+            if (_publishStopwatch.IsRunning && _publishStopwatch.ElapsedMilliseconds < Settings.UpdateIntervalMs)
+                return;
 
-                var applicationMessage = new MqttApplicationMessageBuilder()
+            _publishStopwatch.Restart();
+
+            var payload = JsonConvert.SerializeObject(
+                new Payload.PayloadRoot(data, UserSettings, Settings),
+                new JsonSerializerSettings
+                {
+                    NullValueHandling = NullValueHandling.Ignore
+                });
+
+            // Resolve topic placeholders like {gameName}
+            var resolvedTopic = ResolveTopic(Settings.Topic, data);
+
+            var applicationMessage = new MqttApplicationMessageBuilder()
                .WithTopic(resolvedTopic)
                .WithPayload(payload)
                .Build();
 
-                Task.Run(async () => await mqttClient.PublishAsync(applicationMessage, CancellationToken.None)).Wait();
-            }
+            // Fire-and-forget: don't block the critical DataUpdate path
+            Task.Run(() => mqttClient.PublishAsync(applicationMessage, CancellationToken.None));
         }
 
         /// <summary>

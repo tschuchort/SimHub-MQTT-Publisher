@@ -132,6 +132,13 @@ namespace SimHub.MQTTPublisher
 
         // === ADVANCED DEBUGGING ===
         public bool EnableDebugMode { get; set; } = false;
+
+        // === PERFORMANCE ===
+        /// <summary>
+        /// Minimum interval between MQTT publishes in milliseconds.
+        /// Default 100 ms = ~10 updates/second.
+        /// </summary>
+        public int UpdateIntervalMs { get; set; } = 100;
     }
 
     public class SimHubMQTTPublisherPluginUserSettings

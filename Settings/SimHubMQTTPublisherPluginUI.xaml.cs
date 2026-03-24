@@ -144,6 +144,9 @@ namespace SimHub.MQTTPublisher.Settings
 
                 // === ADVANCED DEBUGGING ===
                 EnableDebugMode = simHubMQTTPublisherPlugin.Settings.EnableDebugMode,
+
+                // === PERFORMANCE ===
+                UpdateIntervalMs = simHubMQTTPublisherPlugin.Settings.UpdateIntervalMs,
             };
 
             this.DataContext = Model;
@@ -298,6 +301,9 @@ namespace SimHub.MQTTPublisher.Settings
 
             // === ADVANCED DEBUGGING ===
             SimHubMQTTPublisherPlugin.Settings.EnableDebugMode = Model.EnableDebugMode;
+
+            // === PERFORMANCE ===
+            SimHubMQTTPublisherPlugin.Settings.UpdateIntervalMs = Model.UpdateIntervalMs;
 
             SimHubMQTTPublisherPlugin.CreateMQTTClient();
         }

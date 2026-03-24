@@ -137,6 +137,9 @@ namespace SimHub.MQTTPublisher.ViewModels
         // === ADVANCED DEBUGGING ===
         private bool _enableDebugMode = false;
 
+        // === PERFORMANCE ===
+        private int _updateIntervalMs = 100;
+
         public string Server
         {
             get => _server;
@@ -1097,6 +1100,17 @@ namespace SimHub.MQTTPublisher.ViewModels
             set
             {
                 _enableDebugMode = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // === PERFORMANCE ===
+        public int UpdateIntervalMs
+        {
+            get => _updateIntervalMs;
+            set
+            {
+                _updateIntervalMs = value < 10 ? 10 : value;
                 OnPropertyChanged();
             }
         }
