@@ -5,6 +5,7 @@ using MQTTnet.Client.Options;
 using Newtonsoft.Json;
 using SimHub.MQTTPublisher.Settings;
 using SimHub.Plugins;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media;
@@ -12,7 +13,7 @@ using System.Windows.Media;
 namespace SimHub.MQTTPublisher
 {
     [PluginDescription("MQTT Publisher")]
-    [PluginAuthor("Asphaug")]
+    [PluginAuthor("TSchuchort")]
     [PluginName("MQTT Publisher Enhanced")]
     public class SimHubMQTTPublisherPlugin : IPlugin, IDataPlugin, IWPFSettingsV2
     {
@@ -22,6 +23,8 @@ namespace SimHub.MQTTPublisher
 
         private MqttFactory mqttFactory;
         private IMqttClient mqttClient;
+        private readonly Stopwatch _publishStopwatch = new Stopwatch();
+        private string _lastPublishedPayload;
 
         /// <summary>
         /// Instance of the current plugin manager
@@ -49,25 +52,70 @@ namespace SimHub.MQTTPublisher
         /// <param name="data">Current game data, including current and previous data frame.</param>
         public void DataUpdate(PluginManager pluginManager, ref GameData data)
         {
-            if (data.GameRunning)
-            {
-                var payload = JsonConvert.SerializeObject(
-                    new Payload.PayloadRoot(data, UserSettings, Settings),
-                    new JsonSerializerSettings
-                    {
-                        NullValueHandling = NullValueHandling.Ignore
-                    });
+            if (!data.GameRunning)
+                return;
 
-                // Resolve topic placeholders like {gameName}
-                var resolvedTopic = ResolveTopic(Settings.Topic, data);
+            // If MQTT is not connected, skip all payload work to keep update loop lightweight.
+            var client = mqttClient;
+            if (client == null || !client.IsConnected)
+                return;
 
-                var applicationMessage = new MqttApplicationMessageBuilder()
+            // Throttle: only publish when the configured interval has elapsed
+            if (_publishStopwatch.IsRunning && _publishStopwatch.ElapsedMilliseconds < Settings.UpdateIntervalMs)
+                return;
+
+            _publishStopwatch.Restart();
+
+            var payloadRoot = new Payload.PayloadRoot(data, UserSettings, Settings);
+
+            var payload = JsonConvert.SerializeObject(
+                payloadRoot,
+                new JsonSerializerSettings
+                {
+                    NullValueHandling = NullValueHandling.Ignore
+                });
+
+            var payloadForChangeDetection = BuildChangeDetectionPayload(payloadRoot, payload);
+
+            // Skip publish if payload hasn't changed and option is enabled
+            if (Settings.PublishOnChangeOnly && payloadForChangeDetection == _lastPublishedPayload)
+                return;
+
+            _lastPublishedPayload = payloadForChangeDetection;
+
+            // Resolve topic placeholders like {gameName}
+            var resolvedTopic = ResolveTopic(Settings.Topic, data);
+
+            var applicationMessage = new MqttApplicationMessageBuilder()
                .WithTopic(resolvedTopic)
                .WithPayload(payload)
                .Build();
 
-                Task.Run(async () => await mqttClient.PublishAsync(applicationMessage, CancellationToken.None)).Wait();
-            }
+            // Fire-and-forget: don't block the critical DataUpdate path
+            _ = client.PublishAsync(applicationMessage, CancellationToken.None);
+        }
+
+        private string BuildChangeDetectionPayload(Payload.PayloadRoot payloadRoot, string payload)
+        {
+            if (!Settings.PublishOnChangeOnly)
+                return payload;
+
+            if (!Settings.Include_Time)
+                return payload;
+
+            // Ignore timestamp-only differences when PublishOnChangeOnly is enabled.
+            var originalTime = payloadRoot.time;
+            payloadRoot.time = null;
+
+            var payloadWithoutTime = JsonConvert.SerializeObject(
+                payloadRoot,
+                new JsonSerializerSettings
+                {
+                    NullValueHandling = NullValueHandling.Ignore
+                });
+
+            payloadRoot.time = originalTime;
+            return payloadWithoutTime;
         }
 
         /// <summary>
@@ -80,7 +128,7 @@ namespace SimHub.MQTTPublisher
             // Save settings
             this.SaveCommonSettings("GeneralSettings", Settings);
             this.SaveCommonSettings("UserSettings", UserSettings);
-            mqttClient.Dispose();
+            mqttClient?.Dispose();
         }
 
         /// <summary>
@@ -109,7 +157,8 @@ namespace SimHub.MQTTPublisher
 
             this.mqttFactory = new MqttFactory();
 
-            CreateMQTTClient();
+            // Run on background thread so the UI thread is never blocked
+            Task.Run(() => CreateMQTTClient());
         }
 
         internal void CreateMQTTClient()
@@ -121,15 +170,26 @@ namespace SimHub.MQTTPublisher
                .WithCredentials(Settings.Login, Settings.Password)
                .Build();
 
-            newmqttClient.ConnectAsync(mqttClientOptions, CancellationToken.None);
 
+
+
+            // Assign client before connecting so DataUpdate can check IsConnected
             var oldMqttClient = this.mqttClient;
-
             mqttClient = newmqttClient;
-
             if (oldMqttClient != null)
-            {
                 oldMqttClient.Dispose();
+
+            // Connect with a 10-second timeout; this method always runs on a background thread
+            try
+            {
+                using (var cts = new CancellationTokenSource(System.TimeSpan.FromSeconds(10)))
+                {
+                    newmqttClient.ConnectAsync(mqttClientOptions, cts.Token).GetAwaiter().GetResult();
+                }
+            }
+            catch (System.Exception ex)
+            {
+                SimHub.Logging.Current.Warn($"MQTT connect failed: {ex.Message}");
             }
         }
 

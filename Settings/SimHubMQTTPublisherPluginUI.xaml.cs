@@ -144,6 +144,10 @@ namespace SimHub.MQTTPublisher.Settings
 
                 // === ADVANCED DEBUGGING ===
                 EnableDebugMode = simHubMQTTPublisherPlugin.Settings.EnableDebugMode,
+
+                // === PERFORMANCE ===
+                UpdateIntervalMs = simHubMQTTPublisherPlugin.Settings.UpdateIntervalMs,
+                PublishOnChangeOnly = simHubMQTTPublisherPlugin.Settings.PublishOnChangeOnly,
             };
 
             this.DataContext = Model;
@@ -299,7 +303,11 @@ namespace SimHub.MQTTPublisher.Settings
             // === ADVANCED DEBUGGING ===
             SimHubMQTTPublisherPlugin.Settings.EnableDebugMode = Model.EnableDebugMode;
 
-            SimHubMQTTPublisherPlugin.CreateMQTTClient();
+            // === PERFORMANCE ===
+            SimHubMQTTPublisherPlugin.Settings.UpdateIntervalMs = Model.UpdateIntervalMs;
+            SimHubMQTTPublisherPlugin.Settings.PublishOnChangeOnly = Model.PublishOnChangeOnly;
+
+            Task.Run(() => SimHubMQTTPublisherPlugin.CreateMQTTClient());
         }
 
         private void EnableAll_Click(object sender, System.Windows.RoutedEventArgs e)

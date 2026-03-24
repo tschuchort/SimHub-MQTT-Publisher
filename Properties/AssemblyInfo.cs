@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("SimHub MQTT Publisher")]
 [assembly: AssemblyDescription("SimHub plugin to publish telemetry data including flag information via MQTT")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Simen Asphaug")]
+[assembly: AssemblyCompany("TSchuchort")]
 [assembly: AssemblyProduct("SimHub.MQTTPublisher")]
-[assembly: AssemblyCopyright("Copyright © Simen Asphaug 2025")]
+[assembly: AssemblyCopyright("Copyright © TSchuchort 2026")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

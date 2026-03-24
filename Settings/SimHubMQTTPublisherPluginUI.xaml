@@ -49,6 +49,8 @@
                             <RowDefinition Height="auto" />
                             <RowDefinition Height="auto" />
                             <RowDefinition Height="auto" />
+                            <RowDefinition Height="auto" />
+                            <RowDefinition Height="auto" />
                         </Grid.RowDefinitions>
 
                         <Label Grid.Row="0">MQTT Server</Label>
@@ -83,8 +85,24 @@
                         <Label Grid.Row="4">User ID</Label>
                         <TextBox Margin="4" Grid.Row="4" Grid.Column="1" Text="{Binding Path=UserId}" IsReadOnly="true" />
 
-                        <Label Grid.Row="5">Connection</Label>
-                        <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal" Margin="4">
+                        <Label Grid.Row="5">Update Interval (ms)</Label>
+                        <StackPanel Grid.Row="5" Grid.Column="1" Margin="4">
+                            <TextBox Text="{Binding Path=UpdateIntervalMs}" />
+                            <TextBlock FontSize="10" Foreground="Gray" Margin="0,2,0,0" TextWrapping="Wrap">
+                                Minimum interval between MQTT publishes in milliseconds. Lower = more frequent. Default: 100 (≈10 Hz). Minimum: 10.
+                            </TextBlock>
+                        </StackPanel>
+
+                        <Label Grid.Row="6">Publish Mode</Label>
+                        <StackPanel Grid.Row="6" Grid.Column="1" Margin="4">
+                            <CheckBox Content="Only publish when data changes" IsChecked="{Binding Path=PublishOnChangeOnly}" />
+                            <TextBlock FontSize="10" Foreground="Gray" Margin="0,2,0,0" TextWrapping="Wrap">
+                                When enabled, MQTT messages are only sent if at least one selected value has changed since the last publish. Greatly reduces traffic for slow-changing data.
+                            </TextBlock>
+                        </StackPanel>
+
+                        <Label Grid.Row="7">Connection</Label>
+                        <StackPanel Grid.Row="7" Grid.Column="1" Orientation="Horizontal" Margin="4">
                             <styles:SHButtonPrimary Margin="0,0,8,0" Click="TestConnection_Click">Test Connection</styles:SHButtonPrimary>
                             <TextBlock x:Name="ConnectionStatusText" VerticalAlignment="Center" Text="Not tested" Foreground="Gray"/>
                         </StackPanel>
@@ -145,8 +163,7 @@
                                     <TextBlock Text="⚠️ Performance Notice" FontWeight="Bold" Foreground="DarkOrange" Margin="0,0,0,4"/>
                                     <TextBlock TextWrapping="Wrap" Foreground="#555">
                                         <Run Text="The more properties you enable, the larger the MQTT payloads and higher the CPU usage."/><LineBreak/>
-                                        <Run Text="The plugin currently sends data on every SimHub update (60-100+ times/second)."/><LineBreak/>
-                                        <Run Text="Configurable update rate will be added in a future release."/>
+                                        <Run Text="You can configure the update interval in Connection Settings (default: 100 ms ≈ 10 Hz)."/>
                                     </TextBlock>
                                 </StackPanel>
                             </Border>
@@ -336,8 +353,7 @@
                                     <TextBlock Text="⚠️ PERFORMANCE WARNING" FontWeight="Bold" Margin="0,0,0,8" Foreground="Orange"/>
                                     <TextBlock TextWrapping="Wrap" Margin="0,0,0,12" Foreground="Gray">
                                         <Run Text="More telemetry properties = Larger payloads = Higher CPU usage."/><LineBreak/>
-                                        <Run Text="The plugin currently uses SimHub's DataUpdate callback (called 60-100+ times per second)."/><LineBreak/>
-                                        <Run Text="Configurable update rate polling will be added in a future update."/>
+                                        <Run Text="You can configure the update interval in Connection Settings (default: 100 ms ≈ 10 Hz)."/>
                                     </TextBlock>
 
                                     <Separator Margin="0,0,0,12"/>
