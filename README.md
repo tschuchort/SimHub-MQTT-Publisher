@@ -387,7 +387,12 @@ Contributions are welcome! Please feel free to:
 
 ## Version History
 
-### v1.2.0 (Current)
+### v1.2.1 (Current)
+
+- **Simplified Installation**: `Newtonsoft.Json.dll` no longer needs to be copied — SimHub already ships with it. Only copy it if you encounter runtime errors.
+- **Fixed AssemblyVersion**: Assembly version now correctly matches the release version
+
+### v1.2.0
 
 - **Configurable Update Rate**: Set MQTT publish interval in milliseconds via Connection Settings (default 100 ms ≈ 10 Hz)
 - **Publish on Change Only**: New option to skip publishing when no telemetry values have changed — greatly reduces MQTT traffic
@@ -421,7 +426,7 @@ Contributions are welcome! Please feel free to:
 
 MIT License
 
-Original project by SHWotever - Enhanced by Simen Asphaug
+Original project by SHWotever - Enhanced by Simen Asphaug - and also enhanced by Torsten Schuchort
 
 ## Acknowledgments
 
