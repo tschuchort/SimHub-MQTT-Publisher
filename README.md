@@ -2,7 +2,10 @@
 
 A powerful and flexible SimHub plugin that publishes granular racing telemetry data to an MQTT broker in real-time. Perfect for building custom dashboards, data analysis tools, streaming overlays, and IoT integrations.
 
-**Forked from and enhanced:** [SHWotever/SimHub-MQTT-Publisher](https://github.com/SHWotever/SimHub-MQTT-Publisher)
+**Forked from and enhanced:** 
+[SimenAsphaug/SimHub-MQTT-Publisher](https://github.com/SimenAsphaug/SimHub-MQTT-Publisher)
+who forked from:
+[SHWotever/SimHub-MQTT-Publisher](https://github.com/SHWotever/SimHub-MQTT-Publisher)
 
 ## Features
 
