@@ -426,7 +426,7 @@ Contributions are welcome! Please feel free to:
 
 MIT License
 
-Original project by SHWotever - Enhanced by Simen Asphaug - and also enhanced by Torsten Schuchort
+Original project by SHWotever - Enhanced by Simen Asphaug (v1.1.0) - and further enhanced by Torsten Schuchort
 
 ## Acknowledgments
 
