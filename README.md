@@ -45,12 +45,14 @@ A powerful and flexible SimHub plugin that publishes granular racing telemetry d
 
 1. **Download the latest release** from the [Releases page](https://github.com/tschuchort/SimHub-MQTT-Publisher/releases)
 
-2. **Extract the release archive** - You'll find three DLL files:
-   - `SimHub.MQTTPublisher.dll`
-   - `MQTTnet.dll`
-   - `Newtonsoft.Json.dll`
+2. **Extract the release archive** - You'll find these DLL files:
+   - `SimHub.MQTTPublisher.dll` (required)
+   - `MQTTnet.dll` (required)
+   - `Newtonsoft.Json.dll` (usually **not** needed — see note below)
 
-3. **Copy all three DLL files** to your SimHub installation directory (typically `C:\Program Files (x86)\SimHub\`)
+3. **Copy `SimHub.MQTTPublisher.dll` and `MQTTnet.dll`** to your SimHub installation directory (typically `C:\Program Files (x86)\SimHub\`)
+
+   > **Note on Newtonsoft.Json.dll:** SimHub already ships with its own copy of this library. You do **not** need to copy it unless you encounter errors such as `FileLoadException` or `MissingMethodException` at runtime. In that case, copy the included `Newtonsoft.Json.dll` (v13.0.3) into the SimHub directory to replace the older version.
 
 4. **Restart SimHub** - The plugin will be automatically detected and loaded
 
