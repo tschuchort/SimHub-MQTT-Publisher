@@ -105,6 +105,10 @@
       <HintPath>$(SIMHUB_INSTALL_PATH)WoteverLocalization.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>$(SIMHUB_INSTALL_PATH)Newtonsoft.Json.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Payload\Car.cs" />
@@ -156,9 +160,6 @@
     <PackageReference Include="MQTTnet">
       <Version>3.1.2</Version>
     </PackageReference>
-    <PackageReference Include="Newtonsoft.Json">
-      <Version>13.0.3</Version>
-    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
@@ -169,7 +170,6 @@ echo.
 echo Copy ONLY these files to SimHub:
 echo   $(TargetDir)$(TargetName).dll
 echo   $(TargetDir)MQTTnet.dll
-echo   $(TargetDir)Newtonsoft.Json.dll
 echo.
 echo Destination: [SimHub Install]\
 echo.
