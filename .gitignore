@@ -270,3 +270,15 @@ __pycache__/
 
 # Temporary release notes
 RELEASE_*.md
+
+# VS Code user-specific settings
+.vscode/
+
+# macOS system files
+.DS_Store
+*/.DS_Store
+
+# Windows system files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
