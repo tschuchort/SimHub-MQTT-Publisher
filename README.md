@@ -1,8 +1,10 @@
 # SimHub MQTT Publisher Enhanced
 
-> **Disclaimer:** This project was developed with the help of AI. I am not a professional programmer — please keep that in mind when using this plugin or reviewing the code.
+> **AI Disclosure:** This project is developed with the assistance of AI tools, primarily **Claude** (Anthropic) as well as other AI-based coding assistants. AI is used for code generation, code review, bug analysis, and documentation. All AI-generated output is reviewed by the project maintainer before being committed. I am not a professional programmer — please keep this in mind when using the plugin or reviewing the code.
 
 A powerful and flexible SimHub plugin that publishes granular racing telemetry data to an MQTT broker in real-time. Perfect for building custom dashboards, data analysis tools, streaming overlays, and IoT integrations.
+
+> **Development & Testing:** This plugin is primarily developed and tested with **Le Mans Ultimate (LMU)**. It is designed to work with all SimHub-supported simulators, but LMU is the reference platform for feature validation and bug testing.
 
 **Forked from and enhanced:**
 [SimenAsphaug/SimHub-MQTT-Publisher](https://github.com/SimenAsphaug/SimHub-MQTT-Publisher)

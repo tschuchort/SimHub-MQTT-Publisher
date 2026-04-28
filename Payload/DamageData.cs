@@ -7,53 +7,48 @@ namespace SimHub.MQTTPublisher.Payload
     {
         public DamageData(GameData data, SimHubMQTTPublisherPluginSettings settings)
         {
-            // Car Damage
             if (settings.Include_CarDamage)
             {
-                Engine = GetSafeDoubleProperty(data, "CarDamagesEngine");
-                Transmission = GetSafeDoubleProperty(data, "CarDamagesTransmission");
-                Aerodynamics = GetSafeDoubleProperty(data, "CarDamagesAero");
-                Suspension = GetSafeDoubleProperty(data, "CarDamagesSuspension");
-                Brakes = GetSafeDoubleProperty(data, "CarDamagesBrakes");
-                Clutch = GetSafeDoubleProperty(data, "CarDamagesClutch");
+                Engine = TelemetryHelper.GetDouble(data, "CarDamagesEngine");
+                Transmission = TelemetryHelper.GetDouble(data, "CarDamagesTransmission");
+                Aerodynamics = TelemetryHelper.GetDouble(data, "CarDamagesAero");
+                Suspension = TelemetryHelper.GetDouble(data, "CarDamagesSuspension");
+                Brakes = TelemetryHelper.GetDouble(data, "CarDamagesBrakes");
+                Clutch = TelemetryHelper.GetDouble(data, "CarDamagesClutch");
             }
 
-            // Engine Temperatures
             if (settings.Include_EngineTemperatures)
             {
-                WaterTemperature = GetSafeDoubleProperty(data, "WaterTemperature");
-                OilTemperature = GetSafeDoubleProperty(data, "OilTemperature");
-                OilPressure = GetSafeDoubleProperty(data, "OilPressure");
-                EngineTemperature = GetSafeDoubleProperty(data, "EngineTemperature");
+                WaterTemperature = TelemetryHelper.GetDouble(data, "WaterTemperature");
+                OilTemperature = TelemetryHelper.GetDouble(data, "OilTemperature");
+                OilPressure = TelemetryHelper.GetDouble(data, "OilPressure");
+                EngineTemperature = TelemetryHelper.GetDouble(data, "EngineTemperature");
             }
 
-            // Brake Temperatures
             if (settings.Include_BrakeTemperatures)
             {
-                BrakeTemperatureFL = GetSafeDoubleProperty(data, "BrakeTemperatureFL");
-                BrakeTemperatureFR = GetSafeDoubleProperty(data, "BrakeTemperatureFR");
-                BrakeTemperatureRL = GetSafeDoubleProperty(data, "BrakeTemperatureRL");
-                BrakeTemperatureRR = GetSafeDoubleProperty(data, "BrakeTemperatureRR");
+                BrakeTemperatureFL = TelemetryHelper.GetDouble(data, "BrakeTemperatureFL");
+                BrakeTemperatureFR = TelemetryHelper.GetDouble(data, "BrakeTemperatureFR");
+                BrakeTemperatureRL = TelemetryHelper.GetDouble(data, "BrakeTemperatureRL");
+                BrakeTemperatureRR = TelemetryHelper.GetDouble(data, "BrakeTemperatureRR");
             }
 
-            // Additional Mechanical Data
             if (settings.Include_TurboData)
             {
-                TurboBoost = GetSafeDoubleProperty(data, "TurboBoost");
-                Manifold = GetSafeDoubleProperty(data, "Manifold");
-                ExhaustTemperature = GetSafeDoubleProperty(data, "ExhaustTemperature");
+                TurboBoost = TelemetryHelper.GetDouble(data, "TurboBoost");
+                Manifold = TelemetryHelper.GetDouble(data, "Manifold");
+                ExhaustTemperature = TelemetryHelper.GetDouble(data, "ExhaustTemperature");
             }
 
-            // Wear Indicators
             if (settings.Include_WearIndicators)
             {
-                EngineWear = GetSafeDoubleProperty(data, "EngineWear");
-                GearboxWear = GetSafeDoubleProperty(data, "GearboxWear");
-                SuspensionWear = GetSafeDoubleProperty(data, "SuspensionWear");
+                EngineWear = TelemetryHelper.GetDouble(data, "EngineWear");
+                GearboxWear = TelemetryHelper.GetDouble(data, "GearboxWear");
+                SuspensionWear = TelemetryHelper.GetDouble(data, "SuspensionWear");
             }
         }
 
-        // Car Damage (typically 0-1 range where 1 is fully damaged)
+        // 0-1 range where 1 = fully damaged
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? Engine { get; set; }
 
@@ -72,7 +67,6 @@ namespace SimHub.MQTTPublisher.Payload
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? Clutch { get; set; }
 
-        // Engine Temperatures and Pressures
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? WaterTemperature { get; set; }
 
@@ -85,7 +79,6 @@ namespace SimHub.MQTTPublisher.Payload
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? EngineTemperature { get; set; }
 
-        // Brake Temperatures
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? BrakeTemperatureFL { get; set; }
 
@@ -98,7 +91,6 @@ namespace SimHub.MQTTPublisher.Payload
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? BrakeTemperatureRR { get; set; }
 
-        // Additional Mechanical Data
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? TurboBoost { get; set; }
 
@@ -108,7 +100,6 @@ namespace SimHub.MQTTPublisher.Payload
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? ExhaustTemperature { get; set; }
 
-        // Wear Indicators
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? EngineWear { get; set; }
 
@@ -117,22 +108,5 @@ namespace SimHub.MQTTPublisher.Payload
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? SuspensionWear { get; set; }
-
-        private double? GetSafeDoubleProperty(GameData data, string propertyName)
-        {
-            try
-            {
-                var property = data.NewData.GetType().GetProperty(propertyName);
-                var value = property?.GetValue(data.NewData);
-                if (value == null) return null;
-                if (double.TryParse(value.ToString(), out double result))
-                    return result;
-                return null;
-            }
-            catch
-            {
-                return null;
-            }
-        }
     }
 }

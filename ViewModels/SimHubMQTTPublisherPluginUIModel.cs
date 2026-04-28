@@ -40,7 +40,7 @@ namespace SimHub.MQTTPublisher.ViewModels
         // === FLAG INFORMATION ===
         private bool _include_Flags = true;
         private bool _include_FlagName = false;
-        private bool _include_GameName = false;
+        private bool _include_GameName = true;
         private bool _include_DebugFlags = false;
 
         // === POSITION & TIMING DATA ===

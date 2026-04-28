@@ -1,6 +1,5 @@
 using GameReaderCommon;
 using Newtonsoft.Json;
-using System;
 
 namespace SimHub.MQTTPublisher.Payload
 {
@@ -8,73 +7,66 @@ namespace SimHub.MQTTPublisher.Payload
     {
         public PositionData(GameData data, SimHubMQTTPublisherPluginSettings settings)
         {
-            // Position Information
             if (settings.Include_Position)
-                Position = GetSafeIntProperty(data, "Position");
+                Position = TelemetryHelper.GetInt(data, "Position");
             if (settings.Include_PositionInClass)
-                PositionInClass = GetSafeIntProperty(data, "PositionInClass");
+                PositionInClass = TelemetryHelper.GetInt(data, "PositionInClass");
 
-            // Gap Information
             if (settings.Include_Gap)
-                Gap = GetSafeDoubleProperty(data, "Gap");
+                Gap = TelemetryHelper.GetDouble(data, "Gap");
             if (settings.Include_GapToLeader)
-                GapToLeader = GetSafeDoubleProperty(data, "GapToLeader");
+                GapToLeader = TelemetryHelper.GetDouble(data, "GapToLeader");
             if (settings.Include_GapToAhead)
-                GapToAhead = GetSafeDoubleProperty(data, "GapToAhead");
+                GapToAhead = TelemetryHelper.GetDouble(data, "GapToAhead");
             if (settings.Include_GapToBehind)
-                GapToBehind = GetSafeDoubleProperty(data, "GapToBehind");
+                GapToBehind = TelemetryHelper.GetDouble(data, "GapToBehind");
 
-            // Lap Times
+            // Lap times — TelemetryHelper.GetDouble converts TimeSpan to milliseconds automatically
             if (settings.Include_LastLapTime)
-                LastLapTime = GetSafeDoubleProperty(data, "LastLapTime");
+                LastLapTime = TelemetryHelper.GetDouble(data, "LastLapTime");
             if (settings.Include_BestLapTime)
-                BestLapTime = GetSafeDoubleProperty(data, "BestLapTime");
+                BestLapTime = TelemetryHelper.GetDouble(data, "BestLapTime");
             if (settings.Include_PersonalBestLapTime)
-                PersonalBestLapTime = GetSafeDoubleProperty(data, "AllTimeBest");  // iRacing uses "AllTimeBest"
+                PersonalBestLapTime = TelemetryHelper.GetDouble(data, "AllTimeBest");
             if (settings.Include_SessionBestLapTime)
-                SessionBestLapTime = GetSafeDoubleProperty(data, "SessionBestLapTime");
+                SessionBestLapTime = TelemetryHelper.GetDouble(data, "SessionBestLapTime");
 
-            // Delta Times
             if (settings.Include_DeltaToSessionBest)
-                DeltaToSessionBest = GetSafeDoubleProperty(data, "DeltaToSessionBest");
+                DeltaToSessionBest = TelemetryHelper.GetDouble(data, "DeltaToSessionBest");
             if (settings.Include_DeltaToPersonalBest)
-                DeltaToPersonalBest = GetSafeDoubleProperty(data, "DeltaToAllTimeBest");  // iRacing uses "DeltaToAllTimeBest"
+                DeltaToPersonalBest = TelemetryHelper.GetDouble(data, "DeltaToAllTimeBest");
             if (settings.Include_DeltaToOptimal)
-                DeltaToOptimal = GetSafeDoubleProperty(data, "DeltaToOptimal");
+                DeltaToOptimal = TelemetryHelper.GetDouble(data, "DeltaToOptimal");
 
-            // Sector Times
             if (settings.Include_Sector1Time)
-                Sector1Time = GetSafeDoubleProperty(data, "Sector1Time");
+                Sector1Time = TelemetryHelper.GetDouble(data, "Sector1Time");
             if (settings.Include_Sector2Time)
-                Sector2Time = GetSafeDoubleProperty(data, "Sector2Time");
+                Sector2Time = TelemetryHelper.GetDouble(data, "Sector2Time");
             if (settings.Include_Sector3Time)
-                Sector3Time = GetSafeDoubleProperty(data, "Sector3Time");
+                Sector3Time = TelemetryHelper.GetDouble(data, "Sector3Time");
             if (settings.Include_Sector1BestTime)
-                Sector1BestTime = GetSafeDoubleProperty(data, "Sector1BestLapTime");  // iRacing uses "Sector1BestLapTime"
+                Sector1BestTime = TelemetryHelper.GetDouble(data, "Sector1BestLapTime");
             if (settings.Include_Sector2BestTime)
-                Sector2BestTime = GetSafeDoubleProperty(data, "Sector2BestLapTime");  // iRacing uses "Sector2BestLapTime"
+                Sector2BestTime = TelemetryHelper.GetDouble(data, "Sector2BestLapTime");
             if (settings.Include_Sector3BestTime)
-                Sector3BestTime = GetSafeDoubleProperty(data, "Sector3BestLapTime");  // iRacing uses "Sector3BestLapTime"
+                Sector3BestTime = TelemetryHelper.GetDouble(data, "Sector3BestLapTime");
             if (settings.Include_CurrentSector)
-                CurrentSector = GetSafeIntProperty(data, "CurrentSectorIndex");  // iRacing uses "CurrentSectorIndex"
+                CurrentSector = TelemetryHelper.GetInt(data, "CurrentSectorIndex");
 
-            // Lap Information
             if (settings.Include_CurrentLap)
-                CurrentLap = GetSafeIntProperty(data, "CurrentLap");
+                CurrentLap = TelemetryHelper.GetInt(data, "CurrentLap");
             if (settings.Include_TotalLaps)
-                TotalLaps = GetSafeIntProperty(data, "TotalLaps");
+                TotalLaps = TelemetryHelper.GetInt(data, "TotalLaps");
             if (settings.Include_CompletedLaps)
-                CompletedLaps = GetSafeIntProperty(data, "CompletedLaps");
+                CompletedLaps = TelemetryHelper.GetInt(data, "CompletedLaps");
         }
 
-        // Position Information
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public int? Position { get; set; }
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public int? PositionInClass { get; set; }
 
-        // Gap Information
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? Gap { get; set; }
 
@@ -87,7 +79,6 @@ namespace SimHub.MQTTPublisher.Payload
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? GapToBehind { get; set; }
 
-        // Lap Times
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? LastLapTime { get; set; }
 
@@ -100,7 +91,6 @@ namespace SimHub.MQTTPublisher.Payload
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? SessionBestLapTime { get; set; }
 
-        // Delta Times
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? DeltaToSessionBest { get; set; }
 
@@ -110,7 +100,6 @@ namespace SimHub.MQTTPublisher.Payload
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? DeltaToOptimal { get; set; }
 
-        // Sector Times
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? Sector1Time { get; set; }
 
@@ -132,7 +121,6 @@ namespace SimHub.MQTTPublisher.Payload
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public int? CurrentSector { get; set; }
 
-        // Lap Information
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public int? CurrentLap { get; set; }
 
@@ -141,44 +129,5 @@ namespace SimHub.MQTTPublisher.Payload
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public int? CompletedLaps { get; set; }
-
-        private double? GetSafeDoubleProperty(GameData data, string propertyName)
-        {
-            try
-            {
-                var property = data.NewData.GetType().GetProperty(propertyName);
-                var value = property?.GetValue(data.NewData);
-                if (value == null) return null;
-
-                // SimHub lap/sector times are TimeSpan objects – convert to milliseconds
-                if (value is TimeSpan ts)
-                    return ts.TotalMilliseconds;
-
-                if (double.TryParse(value.ToString(), out double result))
-                    return result;
-                return null;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        private int? GetSafeIntProperty(GameData data, string propertyName)
-        {
-            try
-            {
-                var property = data.NewData.GetType().GetProperty(propertyName);
-                var value = property?.GetValue(data.NewData);
-                if (value == null) return null;
-                if (int.TryParse(value.ToString(), out int result))
-                    return result;
-                return null;
-            }
-            catch
-            {
-                return null;
-            }
-        }
     }
 }

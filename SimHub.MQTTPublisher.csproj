@@ -119,6 +119,8 @@
     <Compile Include="Payload\PayloadRoot.cs" />
     <Compile Include="Payload\PositionData.cs" />
     <Compile Include="Payload\SafetyData.cs" />
+    <Compile Include="Payload\SessionInfo.cs" />
+    <Compile Include="Payload\TelemetryHelper.cs" />
     <Compile Include="Payload\TireData.cs" />
     <Compile Include="Payload\TrackInformation.cs" />
     <Compile Include="Payload\VehicleInformation.cs" />
