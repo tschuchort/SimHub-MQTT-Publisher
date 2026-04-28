@@ -393,7 +393,19 @@ Contributions are welcome! Please feel free to:
 
 ## Version History
 
-### v1.2.1 (Current)
+### v1.3.0 (Current)
+
+- **TelemetryHelper with PropertyInfo Cache**: All reflection-based property lookups are now cached, eliminating repeated `GetProperty()` calls (~300/s at 10 Hz). TimeSpan-to-milliseconds conversion is now consistent across all payload classes.
+- **MQTT Auto-Reconnect**: The plugin now automatically reconnects when the broker connection drops. The reconnect loop is cleanly cancelled when settings are reapplied or SimHub shuts down.
+- **Publish Error Logging**: MQTT publish failures are now logged to the SimHub log instead of being silently discarded.
+- **Concurrent Guard**: Rapid "Apply Settings" clicks no longer create multiple simultaneous MQTT connections.
+- **Fixed TestConnection**: Connection errors are now correctly surfaced in the UI; the test client is always properly disposed.
+- **Fixed CarCoordinates Null Crash**: Added null check before calling `.ToList()` on coordinates.
+- **Fixed Include_GameName Default**: ViewModel default now matches the Settings class default (`true`).
+- **SessionInfo as Typed Class**: Replaced anonymous object with a proper `SessionInfo` class including correct TimeSpan handling for `SessionTimeLeft`.
+- **LMU as Primary Test Platform**: Development and testing now done with Le Mans Ultimate.
+
+### v1.2.1
 
 - **Simplified Installation**: `Newtonsoft.Json.dll` no longer needs to be copied — SimHub already ships with it. Only copy it if you encounter runtime errors.
 - **Fixed AssemblyVersion**: Assembly version now correctly matches the release version
