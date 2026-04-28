@@ -7,60 +7,54 @@ namespace SimHub.MQTTPublisher.Payload
     {
         public TireData(GameData data, SimHubMQTTPublisherPluginSettings settings)
         {
-            // Tire Temperatures (SimHub uses British spelling "Tyre")
+            // SimHub uses British spelling "Tyre" internally
             if (settings.Include_TireTemperatures)
             {
-                TemperatureFL = GetSafeDoubleProperty(data, "TyreTemperatureFrontLeft");
-                TemperatureFR = GetSafeDoubleProperty(data, "TyreTemperatureFrontRight");
-                TemperatureRL = GetSafeDoubleProperty(data, "TyreTemperatureRearLeft");
-                TemperatureRR = GetSafeDoubleProperty(data, "TyreTemperatureRearRight");
+                TemperatureFL = TelemetryHelper.GetDouble(data, "TyreTemperatureFrontLeft");
+                TemperatureFR = TelemetryHelper.GetDouble(data, "TyreTemperatureFrontRight");
+                TemperatureRL = TelemetryHelper.GetDouble(data, "TyreTemperatureRearLeft");
+                TemperatureRR = TelemetryHelper.GetDouble(data, "TyreTemperatureRearRight");
             }
 
-            // Tire Pressures (SimHub uses British spelling "Tyre")
             if (settings.Include_TirePressures)
             {
-                PressureFL = GetSafeDoubleProperty(data, "TyrePressureFrontLeft");
-                PressureFR = GetSafeDoubleProperty(data, "TyrePressureFrontRight");
-                PressureRL = GetSafeDoubleProperty(data, "TyrePressureRearLeft");
-                PressureRR = GetSafeDoubleProperty(data, "TyrePressureRearRight");
+                PressureFL = TelemetryHelper.GetDouble(data, "TyrePressureFrontLeft");
+                PressureFR = TelemetryHelper.GetDouble(data, "TyrePressureFrontRight");
+                PressureRL = TelemetryHelper.GetDouble(data, "TyrePressureRearLeft");
+                PressureRR = TelemetryHelper.GetDouble(data, "TyrePressureRearRight");
             }
 
-            // Tire Wear (SimHub uses British spelling "Tyre")
             if (settings.Include_TireWear)
             {
-                WearFL = GetSafeDoubleProperty(data, "TyreWearFrontLeft");
-                WearFR = GetSafeDoubleProperty(data, "TyreWearFrontRight");
-                WearRL = GetSafeDoubleProperty(data, "TyreWearRearLeft");
-                WearRR = GetSafeDoubleProperty(data, "TyreWearRearRight");
+                WearFL = TelemetryHelper.GetDouble(data, "TyreWearFrontLeft");
+                WearFR = TelemetryHelper.GetDouble(data, "TyreWearFrontRight");
+                WearRL = TelemetryHelper.GetDouble(data, "TyreWearRearLeft");
+                WearRR = TelemetryHelper.GetDouble(data, "TyreWearRearRight");
             }
 
-            // Tire Grip
             if (settings.Include_TireGrip)
             {
-                GripFL = GetSafeDoubleProperty(data, "TyreGripFL");
-                GripFR = GetSafeDoubleProperty(data, "TyreGripFR");
-                GripRL = GetSafeDoubleProperty(data, "TyreGripRL");
-                GripRR = GetSafeDoubleProperty(data, "TyreGripRR");
+                GripFL = TelemetryHelper.GetDouble(data, "TyreGripFL");
+                GripFR = TelemetryHelper.GetDouble(data, "TyreGripFR");
+                GripRL = TelemetryHelper.GetDouble(data, "TyreGripRL");
+                GripRR = TelemetryHelper.GetDouble(data, "TyreGripRR");
             }
 
-            // Tire Compound
             if (settings.Include_TireCompound)
             {
-                Compound = GetSafeStringProperty(data, "TyreCompound");
-                CompoundShort = GetSafeStringProperty(data, "TyreCompoundShort");
+                Compound = TelemetryHelper.GetString(data, "TyreCompound");
+                CompoundShort = TelemetryHelper.GetString(data, "TyreCompoundShort");
             }
 
-            // Tire Dirt
             if (settings.Include_TireDirt)
             {
-                DirtFL = GetSafeDoubleProperty(data, "TyreDirtFrontLeft");
-                DirtFR = GetSafeDoubleProperty(data, "TyreDirtFrontRight");
-                DirtRL = GetSafeDoubleProperty(data, "TyreDirtRearLeft");
-                DirtRR = GetSafeDoubleProperty(data, "TyreDirtRearRight");
+                DirtFL = TelemetryHelper.GetDouble(data, "TyreDirtFrontLeft");
+                DirtFR = TelemetryHelper.GetDouble(data, "TyreDirtFrontRight");
+                DirtRL = TelemetryHelper.GetDouble(data, "TyreDirtRearLeft");
+                DirtRR = TelemetryHelper.GetDouble(data, "TyreDirtRearRight");
             }
         }
 
-        // Tire Temperatures
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? TemperatureFL { get; set; }
 
@@ -73,7 +67,6 @@ namespace SimHub.MQTTPublisher.Payload
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? TemperatureRR { get; set; }
 
-        // Tire Pressures
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? PressureFL { get; set; }
 
@@ -86,7 +79,6 @@ namespace SimHub.MQTTPublisher.Payload
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? PressureRR { get; set; }
 
-        // Tire Wear
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? WearFL { get; set; }
 
@@ -99,7 +91,6 @@ namespace SimHub.MQTTPublisher.Payload
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? WearRR { get; set; }
 
-        // Tire Grip
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? GripFL { get; set; }
 
@@ -112,14 +103,12 @@ namespace SimHub.MQTTPublisher.Payload
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? GripRR { get; set; }
 
-        // Tire Compound
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public string Compound { get; set; }
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public string CompoundShort { get; set; }
 
-        // Tire Dirt
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? DirtFL { get; set; }
 
@@ -131,35 +120,5 @@ namespace SimHub.MQTTPublisher.Payload
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? DirtRR { get; set; }
-
-        private double? GetSafeDoubleProperty(GameData data, string propertyName)
-        {
-            try
-            {
-                var property = data.NewData.GetType().GetProperty(propertyName);
-                var value = property?.GetValue(data.NewData);
-                if (value == null) return null;
-                if (double.TryParse(value.ToString(), out double result))
-                    return result;
-                return null;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        private string GetSafeStringProperty(GameData data, string propertyName)
-        {
-            try
-            {
-                var property = data.NewData.GetType().GetProperty(propertyName);
-                return property?.GetValue(data.NewData)?.ToString();
-            }
-            catch
-            {
-                return null;
-            }
-        }
     }
 }

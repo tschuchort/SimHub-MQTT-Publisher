@@ -1,10 +1,11 @@
-﻿using GameReaderCommon;
+using GameReaderCommon;
 using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Client.Options;
 using Newtonsoft.Json;
 using SimHub.MQTTPublisher.Settings;
 using SimHub.Plugins;
+using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,7 +19,6 @@ namespace SimHub.MQTTPublisher
     public class SimHubMQTTPublisherPlugin : IPlugin, IDataPlugin, IWPFSettingsV2
     {
         public SimHubMQTTPublisherPluginSettings Settings;
-
         public SimHubMQTTPublisherPluginUserSettings UserSettings { get; private set; }
 
         private MqttFactory mqttFactory;
@@ -26,41 +26,28 @@ namespace SimHub.MQTTPublisher
         private readonly Stopwatch _publishStopwatch = new Stopwatch();
         private string _lastPublishedPayload;
 
-        /// <summary>
-        /// Instance of the current plugin manager
-        /// </summary>
+        // Guards against concurrent CreateMQTTClient calls (e.g. rapid Apply Settings clicks)
+        private volatile bool _isCreatingClient;
+
+        // Cancelled when the associated mqtt client is replaced or the plugin ends,
+        // stopping its reconnect loop.
+        private CancellationTokenSource _reconnectCts;
+
         public PluginManager PluginManager { get; set; }
 
-        /// <summary>
-        /// Gets the left menu icon. Icon must be 24x24 and compatible with black and white display.
-        /// </summary>
         public ImageSource PictureIcon => this.ToIcon(Properties.Resources.sdkmenuicon);
 
-        /// <summary>
-        /// Gets a short plugin title to show in left menu. Return null if you want to use the title as defined in PluginName attribute.
-        /// </summary>
         public string LeftMenuTitle => "MQTT Publisher";
 
-        /// <summary>
-        /// Called one time per game data update, contains all normalized game data,
-        /// raw data are intentionnally "hidden" under a generic object type (A plugin SHOULD NOT USE IT)
-        ///
-        /// This method is on the critical path, it must execute as fast as possible and avoid throwing any error
-        ///
-        /// </summary>
-        /// <param name="pluginManager"></param>
-        /// <param name="data">Current game data, including current and previous data frame.</param>
         public void DataUpdate(PluginManager pluginManager, ref GameData data)
         {
             if (!data.GameRunning)
                 return;
 
-            // If MQTT is not connected, skip all payload work to keep update loop lightweight.
             var client = mqttClient;
             if (client == null || !client.IsConnected)
                 return;
 
-            // Throttle: only publish when the configured interval has elapsed
             if (_publishStopwatch.IsRunning && _publishStopwatch.ElapsedMilliseconds < Settings.UpdateIntervalMs)
                 return;
 
@@ -70,20 +57,15 @@ namespace SimHub.MQTTPublisher
 
             var payload = JsonConvert.SerializeObject(
                 payloadRoot,
-                new JsonSerializerSettings
-                {
-                    NullValueHandling = NullValueHandling.Ignore
-                });
+                new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
 
             var payloadForChangeDetection = BuildChangeDetectionPayload(payloadRoot, payload);
 
-            // Skip publish if payload hasn't changed and option is enabled
             if (Settings.PublishOnChangeOnly && payloadForChangeDetection == _lastPublishedPayload)
                 return;
 
             _lastPublishedPayload = payloadForChangeDetection;
 
-            // Resolve topic placeholders like {gameName}
             var resolvedTopic = ResolveTopic(Settings.Topic, data);
 
             var applicationMessage = new MqttApplicationMessageBuilder()
@@ -91,167 +73,171 @@ namespace SimHub.MQTTPublisher
                .WithPayload(payload)
                .Build();
 
-            // Fire-and-forget: don't block the critical DataUpdate path
-            _ = client.PublishAsync(applicationMessage, CancellationToken.None);
+            // Fire-and-forget: log failures without blocking the critical DataUpdate path
+            var publishTask = client.PublishAsync(applicationMessage, CancellationToken.None);
+            publishTask.ContinueWith(
+                t => SimHub.Logging.Current.Warn($"MQTT publish failed: {t.Exception?.GetBaseException()?.Message}"),
+                TaskContinuationOptions.OnlyOnFaulted);
         }
 
         private string BuildChangeDetectionPayload(Payload.PayloadRoot payloadRoot, string payload)
         {
-            if (!Settings.PublishOnChangeOnly)
+            if (!Settings.PublishOnChangeOnly || !Settings.Include_Time)
                 return payload;
 
-            if (!Settings.Include_Time)
-                return payload;
-
-            // Ignore timestamp-only differences when PublishOnChangeOnly is enabled.
+            // Exclude timestamp from change comparison so a timer tick alone doesn't trigger publish
             var originalTime = payloadRoot.time;
             payloadRoot.time = null;
 
             var payloadWithoutTime = JsonConvert.SerializeObject(
                 payloadRoot,
-                new JsonSerializerSettings
-                {
-                    NullValueHandling = NullValueHandling.Ignore
-                });
+                new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
 
             payloadRoot.time = originalTime;
             return payloadWithoutTime;
         }
 
-        /// <summary>
-        /// Called at plugin manager stop, close/dispose anything needed here !
-        /// Plugins are rebuilt at game change
-        /// </summary>
-        /// <param name="pluginManager"></param>
         public void End(PluginManager pluginManager)
         {
-            // Save settings
             this.SaveCommonSettings("GeneralSettings", Settings);
             this.SaveCommonSettings("UserSettings", UserSettings);
+
+            _reconnectCts?.Cancel();
+            _reconnectCts?.Dispose();
+            _reconnectCts = null;
+
             mqttClient?.Dispose();
         }
 
-        /// <summary>
-        /// Returns the settings control, return null if no settings control is required
-        /// </summary>
-        /// <param name="pluginManager"></param>
-        /// <returns></returns>
         public System.Windows.Controls.Control GetWPFSettingsControl(PluginManager pluginManager)
         {
             return new SimHubMQTTPublisherPluginUI(this);
         }
 
-        /// <summary>
-        /// Called once after plugins startup
-        /// Plugins are rebuilt at game change
-        /// </summary>
-        /// <param name="pluginManager"></param>
         public void Init(PluginManager pluginManager)
         {
             SimHub.Logging.Current.Info("Starting plugin");
 
-            // Load settings
-            Settings = this.ReadCommonSettings<SimHubMQTTPublisherPluginSettings>("GeneralSettings", () => new SimHubMQTTPublisherPluginSettings());
+            Settings = this.ReadCommonSettings<SimHubMQTTPublisherPluginSettings>(
+                "GeneralSettings", () => new SimHubMQTTPublisherPluginSettings());
 
-            UserSettings = this.ReadCommonSettings<SimHubMQTTPublisherPluginUserSettings>("UserSettings", () => new SimHubMQTTPublisherPluginUserSettings());
+            UserSettings = this.ReadCommonSettings<SimHubMQTTPublisherPluginUserSettings>(
+                "UserSettings", () => new SimHubMQTTPublisherPluginUserSettings());
 
-            this.mqttFactory = new MqttFactory();
+            mqttFactory = new MqttFactory();
 
-            // Run on background thread so the UI thread is never blocked
             Task.Run(() => CreateMQTTClient());
         }
 
         internal void CreateMQTTClient()
         {
-            var newmqttClient = mqttFactory.CreateMqttClient();
+            // Prevent concurrent calls from e.g. rapid Apply Settings clicks
+            if (_isCreatingClient)
+                return;
+            _isCreatingClient = true;
 
-            var mqttClientOptions = new MqttClientOptionsBuilder()
-               .WithTcpServer(Settings.Server)
-               .WithCredentials(Settings.Login, Settings.Password)
-               .Build();
-
-
-
-
-            // Assign client before connecting so DataUpdate can check IsConnected
-            var oldMqttClient = this.mqttClient;
-            mqttClient = newmqttClient;
-            if (oldMqttClient != null)
-                oldMqttClient.Dispose();
-
-            // Connect with a 10-second timeout; this method always runs on a background thread
             try
             {
-                using (var cts = new CancellationTokenSource(System.TimeSpan.FromSeconds(10)))
+                // Cancel the reconnect loop of the previous client
+                _reconnectCts?.Cancel();
+                _reconnectCts?.Dispose();
+
+                var cts = new CancellationTokenSource();
+                _reconnectCts = cts;
+
+                var newClient = mqttFactory.CreateMqttClient();
+                var options = new MqttClientOptionsBuilder()
+                   .WithTcpServer(Settings.Server)
+                   .WithCredentials(Settings.Login, Settings.Password)
+                   .Build();
+
+                // Reconnect automatically whenever this client loses its connection,
+                // unless the CTS has been cancelled (plugin ending or settings reapplied).
+                newClient.UseDisconnectedHandler(async e =>
                 {
-                    newmqttClient.ConnectAsync(mqttClientOptions, cts.Token).GetAwaiter().GetResult();
+                    if (cts.IsCancellationRequested)
+                        return;
+
+                    SimHub.Logging.Current.Info("MQTT disconnected, reconnecting in 5 s…");
+
+                    try
+                    {
+                        await Task.Delay(5000, cts.Token).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        return;
+                    }
+
+                    if (cts.IsCancellationRequested)
+                        return;
+
+                    try
+                    {
+                        await newClient.ConnectAsync(options, cts.Token).ConfigureAwait(false);
+                        SimHub.Logging.Current.Info("MQTT reconnected.");
+                    }
+                    catch (OperationCanceledException) { }
+                    catch (Exception ex)
+                    {
+                        SimHub.Logging.Current.Warn($"MQTT reconnect failed: {ex.Message}");
+                    }
+                });
+
+                // Replace the active client atomically and dispose the old one
+                var oldClient = mqttClient;
+                mqttClient = newClient;
+                oldClient?.Dispose();
+
+                // Initial connection attempt (10-second timeout)
+                try
+                {
+                    using (var connectCts = new CancellationTokenSource(TimeSpan.FromSeconds(10)))
+                    {
+                        newClient.ConnectAsync(options, connectCts.Token).GetAwaiter().GetResult();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    SimHub.Logging.Current.Warn($"MQTT connect failed: {ex.Message}");
+                    // DisconnectedHandler will retry automatically
                 }
             }
-            catch (System.Exception ex)
+            finally
             {
-                SimHub.Logging.Current.Warn($"MQTT connect failed: {ex.Message}");
+                _isCreatingClient = false;
             }
         }
 
-        /// <summary>
-        /// Resolves topic placeholders like {gameName}, {sessionType}, {trackName}, {carName} with actual values
-        /// </summary>
-        /// <param name="topic">Topic template with placeholders</param>
-        /// <param name="data">Game data containing runtime values</param>
-        /// <returns>Resolved topic string</returns>
         private string ResolveTopic(string topic, GameData data)
         {
             if (string.IsNullOrEmpty(topic))
                 return topic;
 
-            // Replace {gameName} with actual game name
             if (topic.Contains("{gameName}"))
-            {
-                var gameName = data.GameName ?? "Unknown";
-                gameName = SanitizeTopicSegment(gameName);
-                topic = topic.Replace("{gameName}", gameName);
-            }
+                topic = topic.Replace("{gameName}", SanitizeTopicSegment(data.GameName ?? "Unknown"));
 
-            // Replace {sessionType} with current session type (Practice, Qualifying, Race, etc.)
             if (topic.Contains("{sessionType}"))
-            {
-                var sessionType = GetPropertyValue(data, "SessionTypeName") ?? "Unknown";
-                sessionType = SanitizeTopicSegment(sessionType);
-                topic = topic.Replace("{sessionType}", sessionType);
-            }
+                topic = topic.Replace("{sessionType}", SanitizeTopicSegment(
+                    GetPropertyValue(data, "SessionTypeName") ?? "Unknown"));
 
-            // Replace {trackName} with current track/circuit name
             if (topic.Contains("{trackName}"))
-            {
-                var trackName = GetPropertyValue(data, "TrackName") ?? GetPropertyValue(data, "TrackDisplayName") ?? "Unknown";
-                trackName = SanitizeTopicSegment(trackName);
-                topic = topic.Replace("{trackName}", trackName);
-            }
+                topic = topic.Replace("{trackName}", SanitizeTopicSegment(
+                    GetPropertyValue(data, "TrackName") ?? GetPropertyValue(data, "TrackDisplayName") ?? "Unknown"));
 
-            // Replace {carName} with current vehicle name
             if (topic.Contains("{carName}"))
-            {
-                var carName = GetPropertyValue(data, "CarName") ?? GetPropertyValue(data, "CarModel") ?? "Unknown";
-                carName = SanitizeTopicSegment(carName);
-                topic = topic.Replace("{carName}", carName);
-            }
+                topic = topic.Replace("{carName}", SanitizeTopicSegment(
+                    GetPropertyValue(data, "CarName") ?? GetPropertyValue(data, "CarModel") ?? "Unknown"));
 
             return topic;
         }
 
-        /// <summary>
-        /// Safely retrieves a property value from GameData using reflection
-        /// </summary>
-        /// <param name="data">Game data object</param>
-        /// <param name="propertyName">Property name to retrieve</param>
-        /// <returns>Property value as string, or null if not found</returns>
         private string GetPropertyValue(GameData data, string propertyName)
         {
             try
             {
                 var property = data.NewData.GetType().GetProperty(propertyName);
-                var value = property?.GetValue(data.NewData);
-                return value?.ToString();
+                return property?.GetValue(data.NewData)?.ToString();
             }
             catch
             {
@@ -259,23 +245,14 @@ namespace SimHub.MQTTPublisher
             }
         }
 
-        /// <summary>
-        /// Sanitizes a string for use in MQTT topics (removes invalid characters)
-        /// </summary>
-        /// <param name="input">String to sanitize</param>
-        /// <returns>Sanitized string safe for MQTT topics</returns>
         private string SanitizeTopicSegment(string input)
         {
             if (string.IsNullOrEmpty(input))
                 return "Unknown";
 
-            // Replace spaces with underscores
             input = input.Replace(" ", "_");
-
-            // Remove any characters that aren't alphanumeric, underscore, or hyphen
             input = System.Text.RegularExpressions.Regex.Replace(input, @"[^a-zA-Z0-9_\-]", "");
 
-            // If result is empty, return Unknown
             return string.IsNullOrEmpty(input) ? "Unknown" : input;
         }
     }

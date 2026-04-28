@@ -622,11 +622,11 @@ namespace SimHub.MQTTPublisher.Settings
             ConnectionStatusText.Text = "Testing...";
             ConnectionStatusText.Foreground = new SolidColorBrush(Colors.Orange);
 
+            var factory = new MqttFactory();
+            var testClient = factory.CreateMqttClient();
+
             try
             {
-                var factory = new MqttFactory();
-                var mqttClient = factory.CreateMqttClient();
-
                 var options = new MqttClientOptionsBuilder()
                     .WithTcpServer(Model.Server)
                     .WithCredentials(Model.Login, PasswordBoxHidden.Visibility == System.Windows.Visibility.Visible
@@ -634,35 +634,31 @@ namespace SimHub.MQTTPublisher.Settings
                         : PasswordBoxVisible.Text)
                     .Build();
 
-                // Try to connect with a timeout
-                var connectTask = mqttClient.ConnectAsync(options, CancellationToken.None);
-                var timeoutTask = Task.Delay(5000);
+                var connectTask = testClient.ConnectAsync(options, CancellationToken.None);
+                var completedTask = await Task.WhenAny(connectTask, Task.Delay(5000));
 
-                var completedTask = await Task.WhenAny(connectTask, timeoutTask);
-
-                if (completedTask == timeoutTask)
+                if (completedTask != connectTask)
                 {
                     ConnectionStatusText.Text = "Connection timeout";
                     ConnectionStatusText.Foreground = new SolidColorBrush(Colors.Red);
                 }
-                else if (mqttClient.IsConnected)
-                {
-                    ConnectionStatusText.Text = "Connected successfully!";
-                    ConnectionStatusText.Foreground = new SolidColorBrush(Colors.Green);
-                    await mqttClient.DisconnectAsync();
-                }
                 else
                 {
-                    ConnectionStatusText.Text = "Connection failed";
-                    ConnectionStatusText.Foreground = new SolidColorBrush(Colors.Red);
+                    // Re-await to surface any exception from the connect attempt
+                    await connectTask;
+                    ConnectionStatusText.Text = "Connected successfully!";
+                    ConnectionStatusText.Foreground = new SolidColorBrush(Colors.Green);
+                    await testClient.DisconnectAsync();
                 }
-
-                mqttClient.Dispose();
             }
             catch (System.Exception ex)
             {
                 ConnectionStatusText.Text = $"Error: {ex.Message}";
                 ConnectionStatusText.Foreground = new SolidColorBrush(Colors.Red);
+            }
+            finally
+            {
+                testClient.Dispose();
             }
         }
 

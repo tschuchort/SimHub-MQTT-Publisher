@@ -1,4 +1,4 @@
-﻿using GameReaderCommon;
+using GameReaderCommon;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
@@ -27,7 +27,7 @@ namespace SimHub.MQTTPublisher.Payload
             if (settings.Include_Gear)
                 Gear = data.NewData.Gear;
 
-            if (settings.Include_CarCoordinates)
+            if (settings.Include_CarCoordinates && data.NewData.CarCoordinates != null)
                 CarCoordinates = data.NewData.CarCoordinates.ToList();
 
             if (settings.Include_CurrentLapTime)

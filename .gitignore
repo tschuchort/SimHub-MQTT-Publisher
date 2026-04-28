@@ -262,8 +262,13 @@ __pycache__/
 *.pyc
 /Endeca.Export.Navigation/.nuget/NuGet.exe
 
-# Claude Code configuration
+# Claude Code and AI assistant files
 .claude/
+CLAUDE.md
+.aider*
+.cursorrules
+.cursorignore
+.copilot/
 
 # GitHub workflows and actions (not needed for this project)
 .github/

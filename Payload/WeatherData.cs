@@ -7,54 +7,48 @@ namespace SimHub.MQTTPublisher.Payload
     {
         public WeatherData(GameData data, SimHubMQTTPublisherPluginSettings settings)
         {
-            // Temperature
             if (settings.Include_AirTemperature)
-                AirTemperature = GetSafeDoubleProperty(data, "AirTemperature");
+                AirTemperature = TelemetryHelper.GetDouble(data, "AirTemperature");
 
             if (settings.Include_TrackTemperature)
             {
-                TrackTemperature = GetSafeDoubleProperty(data, "TrackTemperature");
-                RoadTemperature = GetSafeDoubleProperty(data, "RoadTemperature");
+                TrackTemperature = TelemetryHelper.GetDouble(data, "TrackTemperature");
+                RoadTemperature = TelemetryHelper.GetDouble(data, "RoadTemperature");
             }
 
-            // Weather Conditions
             if (settings.Include_WeatherType)
             {
-                WeatherType = GetSafeStringProperty(data, "WeatherType");
-                IsWetTrack = GetSafeBoolProperty(data, "IsWetTrack");
+                WeatherType = TelemetryHelper.GetString(data, "WeatherType");
+                IsWetTrack = TelemetryHelper.GetBool(data, "IsWetTrack");
             }
 
             if (settings.Include_RainLevel)
-                RainLevel = GetSafeDoubleProperty(data, "RainLevel");
+                RainLevel = TelemetryHelper.GetDouble(data, "RainLevel");
 
             if (settings.Include_Humidity)
-                Humidity = GetSafeDoubleProperty(data, "Humidity");
+                Humidity = TelemetryHelper.GetDouble(data, "Humidity");
 
-            // Wind
             if (settings.Include_WindData)
             {
-                WindSpeed = GetSafeDoubleProperty(data, "WindSpeed");
-                WindDirection = GetSafeDoubleProperty(data, "WindDirection");
+                WindSpeed = TelemetryHelper.GetDouble(data, "WindSpeed");
+                WindDirection = TelemetryHelper.GetDouble(data, "WindDirection");
             }
 
-            // Track Conditions
             if (settings.Include_TrackGrip)
             {
-                TrackGrip = GetSafeDoubleProperty(data, "TrackGrip");
-                TrackWetness = GetSafeDoubleProperty(data, "TrackWetness");
+                TrackGrip = TelemetryHelper.GetDouble(data, "TrackGrip");
+                TrackWetness = TelemetryHelper.GetDouble(data, "TrackWetness");
             }
 
-            // Time and Lighting
             if (settings.Include_TimeOfDay)
             {
-                TimeOfDay = GetSafeStringProperty(data, "TimeOfDay");
-                DayTime = GetSafeDoubleProperty(data, "DayTime");
-                IsNight = GetSafeBoolProperty(data, "IsNight");
-                SunAngle = GetSafeDoubleProperty(data, "SunAngle");
+                TimeOfDay = TelemetryHelper.GetString(data, "TimeOfDay");
+                DayTime = TelemetryHelper.GetDouble(data, "DayTime");
+                IsNight = TelemetryHelper.GetBool(data, "IsNight");
+                SunAngle = TelemetryHelper.GetDouble(data, "SunAngle");
             }
         }
 
-        // Temperature
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? AirTemperature { get; set; }
 
@@ -64,7 +58,6 @@ namespace SimHub.MQTTPublisher.Payload
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? RoadTemperature { get; set; }
 
-        // Weather Conditions
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public string WeatherType { get; set; }
 
@@ -77,21 +70,18 @@ namespace SimHub.MQTTPublisher.Payload
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public bool? IsWetTrack { get; set; }
 
-        // Wind
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? WindSpeed { get; set; }
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? WindDirection { get; set; }
 
-        // Track Conditions
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? TrackGrip { get; set; }
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? TrackWetness { get; set; }
 
-        // Time and Lighting
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public string TimeOfDay { get; set; }
 
@@ -103,58 +93,5 @@ namespace SimHub.MQTTPublisher.Payload
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public double? SunAngle { get; set; }
-
-        private double? GetSafeDoubleProperty(GameData data, string propertyName)
-        {
-            try
-            {
-                var property = data.NewData.GetType().GetProperty(propertyName);
-                var value = property?.GetValue(data.NewData);
-                if (value == null) return null;
-                if (double.TryParse(value.ToString(), out double result))
-                    return result;
-                return null;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        private string GetSafeStringProperty(GameData data, string propertyName)
-        {
-            try
-            {
-                var property = data.NewData.GetType().GetProperty(propertyName);
-                return property?.GetValue(data.NewData)?.ToString();
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        private bool? GetSafeBoolProperty(GameData data, string propertyName)
-        {
-            try
-            {
-                var property = data.NewData.GetType().GetProperty(propertyName);
-                var value = property?.GetValue(data.NewData);
-                if (value == null) return null;
-
-                if (value is bool boolValue)
-                    return boolValue;
-                if (value is int intValue)
-                    return intValue == 1;
-                if (bool.TryParse(value.ToString(), out bool parsedBool))
-                    return parsedBool;
-
-                return null;
-            }
-            catch
-            {
-                return null;
-            }
-        }
     }
 }
